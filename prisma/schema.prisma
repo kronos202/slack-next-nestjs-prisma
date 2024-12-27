@@ -163,11 +163,12 @@ model Message {
   replies          Message[] @relation("ParentMessage")
 
   reaction Reaction[]
+  Image Image[]
+
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   @@map("message")
-  Image Image[]
 }
 
 model Reaction {
@@ -192,8 +193,8 @@ model Image {
   metadata    Json?
   userId    String  @map("user_id")
   user      User      @relation(fields: [userId], references: [id],onDelete: Cascade)
-  messageId   String
-  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade) // Quan hệ với Message
+  message     Message?  @relation(fields: [messageId], references: [id], onDelete: Cascade) // Quan hệ với Message
+  messageId   String?
   
 
   createdAt DateTime @default(now()) @map("created_at")
