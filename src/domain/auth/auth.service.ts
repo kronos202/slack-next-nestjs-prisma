@@ -133,11 +133,8 @@ export class AuthService {
       hash,
     });
 
-    const role = user.role;
-
     const { token, refreshToken, tokenExpires } = await this.getTokensData({
       id: user.id,
-      role,
       sessionId: session.id,
       hash,
     });
@@ -152,7 +149,6 @@ export class AuthService {
 
   private async getTokensData(data: {
     id: User['id'];
-    role: string;
     sessionId: Session['id'];
     hash: Session['hash'];
   }) {
@@ -166,7 +162,6 @@ export class AuthService {
       await this.jwtService.signAsync(
         {
           id: data.id,
-          roles: data.role,
           sessionId: data.sessionId,
         },
         {
@@ -178,7 +173,6 @@ export class AuthService {
         {
           sessionId: data.sessionId,
           hash: data.hash,
-          roles: data.role,
         },
         {
           secret: this.authConfig.auth.refresh_secret_key,
@@ -303,7 +297,6 @@ export class AuthService {
 
     const { token, refreshToken, tokenExpires } = await this.getTokensData({
       id: session.userId,
-      role,
       sessionId: session.id,
       hash,
     });

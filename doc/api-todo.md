@@ -95,3 +95,27 @@ workspace:
 - generateJoinCode()
 
 users:
+
+thanh toán:
+Lưu ý quyền hạn: Phân quyền rõ ràng giữa Owner và Admin.
+Tích hợp API thanh toán: Sử dụng Stripe, PayPal, hoặc hệ thống thanh toán khác để xử lý.
+Tự động điều chỉnh: Hệ thống cần hỗ trợ tính toán tự động (thêm/xóa người dùng giữa chu kỳ).
+Quản lý hóa đơn: Cho phép xuất hóa đơn PDF, theo dõi lịch sử thanh toán.
+
+a. Free (Miễn phí)
+Lưu trữ tin nhắn giới hạn (thường là 90 ngày hoặc 10,000 tin nhắn).
+Hạn chế dung lượng file.
+Không có tính năng gọi video nhóm hoặc tích hợp nâng cao.
+b. Pro
+Lưu trữ không giới hạn tin nhắn.
+Cuộc gọi video nhóm.
+Tích hợp với các ứng dụng như Google Drive, Salesforce.
+
+Mô hình thanh toán
+Slack sử dụng hai mô hình thanh toán chính:
+
+a. Per Active User (Theo số người dùng hoạt động)
+Người dùng trả phí dựa trên số lượng thành viên hoạt động trong workspace.
+Nếu một thành viên không hoạt động trong một tháng, chi phí sẽ được tự động giảm cho tháng đó.
+b. Annual Billing (Thanh toán hàng năm)
+Người dùng có thể chọn trả trước cho cả năm để được giảm giá (thường giảm 15-20% so với thanh toán hàng tháng).

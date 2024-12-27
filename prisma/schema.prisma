@@ -35,7 +35,6 @@ enum MessageType {
 }
 
 
-
 model User {
   id          String    @id @default(cuid())
   email    String  @unique
@@ -59,6 +58,7 @@ model User {
   Session Session[]
   Member Member[]
   Workspace Workspace[]
+  Image Image[]
 
   @@map("user")
 }
@@ -80,6 +80,8 @@ model Member {
   Message Message[]
   Reaction Reaction[]
 
+  @@unique([userId, workspaceId])
+
   @@map("member")
 }
 
@@ -90,16 +92,18 @@ model Workspace {
   member User @relation( fields: [memberId],references: [id])
   createdBy   String     @map("created_by") @db.VarChar(255)
   joinCode    String     @unique
+  
  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-
   Member Member[]
   Channel Channel[]
   Conversation Conversation[]
   Message Message[]
   Reaction Reaction[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([memberId, id])
 
   @@map("workspace")
 }
@@ -107,7 +111,8 @@ model Workspace {
 
 model Channel {
   id          String    @id @default(cuid())
-  name    String @db.VarChar(255)
+  name    String @db.VarChar(255) 
+  isPrivate Boolean @default(false) @map("is_private")
   workspaceId String
   workspace Workspace @relation(fields: [workspaceId],references: [id], onDelete: Cascade)
 
@@ -116,30 +121,34 @@ model Channel {
 
   Message Message[]
 
+  @@unique([name, workspaceId])
+
   @@map("channel")
 }
 
 model Conversation {
   id          String    @id @default(cuid())
-  workspaceId String
-  memberOneId String
-  memberTwoId String
+  workspaceId String 
+  memberOneId String 
+  memberTwoId String 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   memberOne   Member    @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
   memberTwo   Member    @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
+  Message Message[]
+
+  @@unique([memberOneId, memberTwoId])
 
   @@map("conversation")
-  Message Message[]
 }
 
 model Message {
   id               String    @id @default(cuid())
   content          String?
-  imageUrl         String?
-  messageType MessageType? @default(TEXT)
+  imageUrl         String? @map("image_url")
+  messageType MessageType? @default(TEXT) @map("message_type")
   memberId         String
   workspaceId      String
   channelId        String?
@@ -153,11 +162,12 @@ model Message {
   parentMessage    Message?  @relation("ParentMessage", fields: [parentMessageId], references: [id], onDelete: Cascade)
   replies          Message[] @relation("ParentMessage")
 
-  Reaction Reaction[]
+  reaction Reaction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   @@map("message")
+  Image Image[]
 }
 
 model Reaction {
@@ -176,6 +186,20 @@ model Reaction {
   @@map("reaction")
 }
 
+model Image {
+  id          String    @id @default(cuid())
+  imageUrl String
+  metadata    Json?
+  userId    String  @map("user_id")
+  user      User      @relation(fields: [userId], references: [id],onDelete: Cascade)
+  messageId   String
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade) // Quan hệ với Message
+  
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("image")
+}
 
 model Session {
   id          Int    @id @default(autoincrement())
