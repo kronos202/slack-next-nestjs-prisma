@@ -103,7 +103,7 @@ Tự động điều chỉnh: Hệ thống cần hỗ trợ tính toán tự đ�
 Quản lý hóa đơn: Cho phép xuất hóa đơn PDF, theo dõi lịch sử thanh toán.
 
 a. Free (Miễn phí)
-Lưu trữ tin nhắn giới hạn (thường là 90 ngày hoặc 10,000 tin nhắn).
+Lưu trữ tin nhắn giới hạn (thường là 90 ngày hoặc 10,000 tin nhắn) -> gửi mail.
 Hạn chế dung lượng file.
 Không có tính năng gọi video nhóm hoặc tích hợp nâng cao.
 b. Pro
