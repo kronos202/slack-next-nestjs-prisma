@@ -24,17 +24,11 @@ export class MembersService {
     return members;
   }
 
-  async getMemberById(memberId: string, userId: string) {
-    const member = await this.databaseService.member.findUnique({
-      where: { id: memberId },
-      include: { user: true },
-    });
-    if (!member) throw new NotFoundException('Member not found');
-
-    const currentMember = await this.getMember(member.workspaceId, userId);
+  async getMemberById(workspaceId: string, userId: string) {
+    const currentMember = await this.getMember(workspaceId, userId);
     if (!currentMember) throw new ForbiddenException('Unauthorized');
 
-    return member;
+    return currentMember;
   }
 
   async updateMemberRole(id: string, role: RoleEnum, userId: string) {
@@ -65,15 +59,39 @@ export class MembersService {
       throw new ForbiddenException('Unauthorized');
     }
 
+    // Xóa các tin nhắn và phản ứng liên quan đến member
     await this.databaseService.message.deleteMany({ where: { memberId } });
     await this.databaseService.reaction.deleteMany({ where: { memberId } });
-    await this.databaseService.conversation.deleteMany({
-      where: {
-        OR: [{ memberOneId: memberId }, { memberTwoId: memberId }],
-      },
+
+    // Xóa member khỏi tất cả các conversation
+    await this.databaseService.conversationParticipant.deleteMany({
+      where: { memberId },
     });
 
-    return this.databaseService.member.delete({ where: { id: memberId } });
+    // Kiểm tra và xóa các conversation không còn participant nào
+    const orphanedConversations =
+      await this.databaseService.conversation.findMany({
+        where: {
+          participants: {
+            none: {}, // Lấy các conversation không có participants
+          },
+        },
+      });
+
+    await Promise.all(
+      orphanedConversations.map((conversation) =>
+        this.databaseService.conversation.delete({
+          where: { id: conversation.id },
+        }),
+      ),
+    );
+
+    // Xóa member khỏi workspace
+    await this.databaseService.member.delete({ where: { id: memberId } });
+
+    return {
+      message: 'Delete thành công user',
+    };
   }
 
   private async getMember(workspaceId: string, userId: string) {

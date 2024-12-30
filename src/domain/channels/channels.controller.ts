@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Request,
 } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
@@ -15,56 +16,54 @@ import { UpdateChannelDto } from './dto/update-channel.dto';
 export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
 
-  @Post('create')
+  // create channel
+  @Post('/:workspaceId')
   async createChannel(
-    @Body() body: { userId: string; workspaceId: string; name: string },
+    @Body() createChannelDto: CreateChannelDto,
+    @Param('workspaceId') workspaceId: string,
+    @Request() request,
   ) {
     return this.channelsService.createChannel(
-      body.userId,
-      body.workspaceId,
-      body.name,
+      createChannelDto,
+      request.user.id,
+      workspaceId,
     );
   }
 
-  @Patch('update')
+  @Patch(':channelId')
   async updateChannel(
-    @Body() body: { userId: string; channelId: string; name: string },
+    @Body() updateChannelDto: UpdateChannelDto,
+    @Param('channelId') channelId: string,
+    @Request() request,
   ) {
     return this.channelsService.updateChannel(
-      body.userId,
-      body.channelId,
-      body.name,
+      updateChannelDto,
+      request.user.id,
+      channelId,
     );
   }
 
-  @Delete('remove')
-  async removeChannel(@Body() body: { userId: string; channelId: string }) {
-    return this.channelsService.removeChannel(body.userId, body.channelId);
-  }
-
-  @Get('current')
-  async getCurrentChannel(
-    @Body() body: { userId: string; workspaceId: string },
+  @Delete(':channelId')
+  async removeChannel(
+    @Param('channelId') channelId: string,
+    @Request() request,
   ) {
-    return this.channelsService.getCurrentChannel(
-      body.userId,
-      body.workspaceId,
-    );
+    return this.channelsService.removeChannel(request.user.id, channelId);
   }
 
-  @Get('get')
-  async getChannels(@Body() body: { userId: string; workspaceId: string }) {
-    return this.channelsService.getChannelsByWorkspaceId(
-      body.userId,
-      body.workspaceId,
-    );
+  @Get('/:workspaceId/current')
+  async getChannels(
+    @Request() request,
+    @Param('workspaceId') workspaceId: string,
+  ) {
+    return this.channelsService.getCurrentChannel(request.user.id, workspaceId);
   }
 
-  @Get('get/:id')
+  @Get(':channelId')
   async getChannelById(
-    @Param('id') channelId: string,
-    @Body() body: { userId: string },
+    @Param('channelId') channelId: string,
+    @Request() request,
   ) {
-    return this.channelsService.getChannelById(body.userId, channelId);
+    return this.channelsService.getChannelById(request.user.id, channelId);
   }
 }

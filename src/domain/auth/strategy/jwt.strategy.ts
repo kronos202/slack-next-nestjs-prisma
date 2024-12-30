@@ -16,11 +16,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: authConfig.auth.access_secret_key,
       ignoreExpiration: false,
-      passReqToCallback: true,
     });
   }
 
   public validate(payload: JwtPayloadType): OrNeverType<JwtPayloadType> {
+    console.log('log here');
+
     if (!payload.id) {
       throw new UnauthorizedException();
     }

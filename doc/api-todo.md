@@ -119,3 +119,7 @@ Người dùng trả phí dựa trên số lượng thành viên hoạt động 
 Nếu một thành viên không hoạt động trong một tháng, chi phí sẽ được tự động giảm cho tháng đó.
 b. Annual Billing (Thanh toán hàng năm)
 Người dùng có thể chọn trả trước cho cả năm để được giảm giá (thường giảm 15-20% so với thanh toán hàng tháng).
+
+3.3. Nhắc đến (Mentions)
+Sử dụng @username để nhắc đến một người dùng cụ thể.
+@here và @channel để nhắc nhở tất cả thành viên trong kênh

@@ -15,17 +15,14 @@ export class UploadService {
   ) {}
 
   // Tải hình ảnh lên Cloudinary và lưu vào cơ sở dữ liệu
-  async uploadImages(
+  public async uploadImagesToCloudinary(
     files: Express.Multer.File[],
-    userId?: string,
-    messageId?: string,
-  ): Promise<any[]> {
+  ): Promise<CloudinaryResponse[]> {
     const cloudinary = this.cloudinary.getInstance();
 
-    // Upload các hình ảnh lên Cloudinary và lấy thông tin trả về
     const uploadPromises = files.map(
       (file) =>
-        new Promise((resolve, reject) => {
+        new Promise<CloudinaryResponse>((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             { folder: 'chat-app/images', resource_type: 'image' },
             (error, result) => {
@@ -37,23 +34,7 @@ export class UploadService {
         }),
     );
 
-    // Đợi tất cả các hình ảnh được tải lên
-    const uploadResults: any[] = await Promise.all(uploadPromises);
-
-    // Lưu thông tin của hình ảnh vào bảng Image
-    const imageRecords = uploadResults.map((result) => ({
-      id: result.public_id, // ID của hình ảnh trong Cloudinary
-      imageUrl: result.secure_url, // URL của hình ảnh trên Cloudinary
-      userId,
-      messageId, // Liên kết với messageId nếu có
-    }));
-
-    // Lưu thông tin hình ảnh vào cơ sở dữ liệu
-    await this.database.image.createMany({
-      data: imageRecords,
-    });
-
-    return imageRecords;
+    return await Promise.all(uploadPromises);
   }
 
   // Tải ảnh đại diện lên Cloudinary và lưu vào bảng User

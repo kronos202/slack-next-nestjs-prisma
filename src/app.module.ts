@@ -10,6 +10,12 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { UploadModule } from './upload/upload.module';
+import { WorkspacesModule } from './domain/workspaces/workspaces.module';
+import { ChannelsModule } from './domain/channels/channels.module';
+import { MembersModule } from './domain/members/members.module';
+import { ReactionsModule } from './domain/reactions/reactions.module';
+import { ConversationsModule } from './domain/conversations/conversations.module';
+import { MessagesModule } from './domain/messages/messages.module';
 
 @Module({
   imports: [
@@ -28,6 +34,12 @@ import { UploadModule } from './upload/upload.module';
     DatabaseModule,
     AuthModule,
     UploadModule,
+    WorkspacesModule,
+    ChannelsModule,
+    MembersModule,
+    ReactionsModule,
+    ConversationsModule,
+    MessagesModule,
   ],
   controllers: [],
   providers: [

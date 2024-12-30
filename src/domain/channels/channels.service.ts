@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { DatabaseService } from 'src/database/database.service';
@@ -7,7 +11,12 @@ import { DatabaseService } from 'src/database/database.service';
 export class ChannelsService {
   constructor(protected databaseService: DatabaseService) {}
 
-  async createChannel(userId: string, workspaceId: string, name: string) {
+  async createChannel(
+    createChannelDto: CreateChannelDto,
+    userId: string,
+    workspaceId: string,
+  ) {
+    const { name, isPrivate } = createChannelDto;
     const member = await this.databaseService.member.findUnique({
       where: {
         userId_workspaceId: {
@@ -23,13 +32,19 @@ export class ChannelsService {
       data: {
         name: name.replace(/\s/g, '-').toLowerCase(),
         workspaceId,
+        isPrivate,
       },
     });
 
     return channel.id;
   }
 
-  async updateChannel(userId: string, channelId: string, name: string) {
+  async updateChannel(
+    updateChannelDto: UpdateChannelDto,
+    userId: string,
+    channelId: string,
+  ) {
+    const { isPrivate, name } = updateChannelDto;
     const channel = await this.databaseService.channel.findUnique({
       where: { id: channelId },
     });
@@ -49,12 +64,12 @@ export class ChannelsService {
       throw new Error('Unauthorized');
     }
 
-    await this.databaseService.channel.update({
+    const updatedChannel = await this.databaseService.channel.update({
       where: { id: channelId },
-      data: { name },
+      data: { name, isPrivate },
     });
 
-    return channelId;
+    return updatedChannel;
   }
 
   async removeChannel(userId: string, channelId: string) {
@@ -91,7 +106,9 @@ export class ChannelsService {
       where: { id: channelId },
     });
 
-    return channelId;
+    return {
+      message: 'Delete thành công',
+    };
   }
 
   // workspace-channel.service.ts
@@ -136,23 +153,32 @@ export class ChannelsService {
     return channel;
   }
 
-  // workspace-channel.service.ts
-  async getChannelsByWorkspaceId(userId: string, workspaceId: string) {
-    const member = await this.databaseService.member.findUnique({
-      where: {
-        userId_workspaceId: {
-          workspaceId,
-          userId,
-        },
-      },
+  async getMessagesInChannel(channelId: string, limit: number = 50) {
+    return this.databaseService.message.findMany({
+      where: { channelId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  async checkChannelAccess(channelId: string, userId: string) {
+    const channel = await this.databaseService.channel.findUnique({
+      where: { id: channelId },
+      include: { workspace: true },
     });
 
-    if (!member) return [];
+    if (!channel) {
+      throw new NotFoundException('Channel not found.');
+    }
 
-    const channels = await this.databaseService.channel.findMany({
-      where: { workspaceId },
+    const member = await this.databaseService.member.findFirst({
+      where: { workspaceId: channel.workspaceId, userId },
     });
 
-    return channels;
+    if (!member) {
+      throw new UnauthorizedException('User is not part of the workspace.');
+    }
+
+    return member;
   }
 }

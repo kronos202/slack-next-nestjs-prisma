@@ -28,7 +28,7 @@ export class UploadController {
     @Body('userId') userId: string,
     @Body('propertyId') propertyId: string,
   ) {
-    return await this.uploadService.uploadImages(files, userId, propertyId);
+    // return await this.uploadService.uploadImages(files, userId, propertyId);
   }
 
   @Post('uploads')

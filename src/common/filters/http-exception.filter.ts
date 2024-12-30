@@ -31,6 +31,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const code = errors.statusCode;
     delete errors.statusCode;
+    delete errors.message;
 
     const responseBody: IResponse = {
       success: false,

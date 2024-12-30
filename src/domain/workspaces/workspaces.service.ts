@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { DatabaseService } from 'src/database/database.service';
@@ -7,18 +7,17 @@ import { DatabaseService } from 'src/database/database.service';
 export class WorkspacesService {
   constructor(protected databaseService: DatabaseService) {}
 
-  async joinWorkspace(userId: string, workspaceId: string, joinCode: string) {
+  async joinWorkspace(userId: string, joinCode: string) {
+    // Tìm workspace dựa trên joinCode
     const workspace = await this.databaseService.workspace.findUnique({
-      where: { id: workspaceId },
+      where: { joinCode: joinCode.toLowerCase() }, // Xử lý joinCode không phân biệt chữ hoa/chữ thường
     });
 
     if (!workspace) {
       throw new Error('Workspace not found');
     }
 
-    if (workspace.joinCode !== joinCode.toLowerCase()) {
-      throw new Error('Invalid join code');
-    }
+    const workspaceId = workspace.id;
 
     const existingMember = await this.databaseService.member.findUnique({
       where: {
@@ -72,7 +71,6 @@ export class WorkspacesService {
         name,
         memberId: userId,
         joinCode,
-        createdBy: userId,
       },
     });
 
@@ -108,6 +106,9 @@ export class WorkspacesService {
         id: {
           in: workspaceIds,
         },
+      },
+      include: {
+        Channel: true,
       },
     });
 
@@ -200,6 +201,130 @@ export class WorkspacesService {
       name: workspace?.name,
       isMember: !!member,
     };
+  }
+
+  async checkWorkspaceAccess(workspaceId: string, userId: string) {
+    const member = await this.databaseService.member.findFirst({
+      where: { workspaceId, userId },
+    });
+
+    if (!member) {
+      throw new UnauthorizedException('Access denied to this workspace.');
+    }
+
+    return member;
+  }
+
+  async getMembers(workspaceId: string) {
+    return this.databaseService.member.findMany({
+      where: { workspaceId },
+      include: { user: true },
+    });
+  }
+
+  private async validateMemberRole(
+    userId: string,
+    workspaceId: string,
+    requiredRole: string,
+  ) {
+    const member = await this.databaseService.member.findUnique({
+      where: {
+        userId_workspaceId: { workspaceId, userId },
+      },
+    });
+
+    if (!member || member.role !== requiredRole) {
+      throw new UnauthorizedException(`Requires ${requiredRole} role`);
+    }
+
+    return member;
+  }
+
+  async leaveWorkspace(userId: string, workspaceId: string) {
+    const member = await this.databaseService.member.findUnique({
+      where: {
+        userId_workspaceId: { workspaceId, userId },
+      },
+    });
+
+    if (!member) {
+      throw new Error('Not a member of this workspace.');
+    }
+
+    if (member.role === 'ADMIN') {
+      const adminCount = await this.databaseService.member.count({
+        where: { workspaceId, role: 'ADMIN' },
+      });
+
+      if (adminCount <= 1) {
+        throw new Error('Cannot leave workspace as the only admin.');
+      }
+    }
+
+    await this.databaseService.member.delete({
+      where: {
+        userId_workspaceId: { workspaceId, userId },
+      },
+    });
+
+    return { message: 'Left workspace successfully' };
+  }
+
+  // async searchWorkspaces(keyword: string) {
+  //   return this.databaseService.workspace.findMany({
+  //     where: {
+  //       name: {
+  //         contains: keyword,
+  //         mode: 'insensitive',
+  //       },
+  //     },
+  //   });
+  // }
+
+  async transferAdminRole(
+    userId: string,
+    workspaceId: string,
+    newAdminId: string,
+  ) {
+    await this.validateMemberRole(userId, workspaceId, 'ADMIN');
+
+    const newAdmin = await this.databaseService.member.findUnique({
+      where: {
+        userId_workspaceId: { workspaceId, userId: newAdminId },
+      },
+    });
+
+    if (!newAdmin) {
+      throw new Error('New admin must be a member of the workspace.');
+    }
+
+    await this.databaseService.member.update({
+      where: {
+        userId_workspaceId: { workspaceId, userId },
+      },
+      data: { role: 'MEMBER' },
+    });
+
+    await this.databaseService.member.update({
+      where: {
+        userId_workspaceId: { workspaceId, userId: newAdminId },
+      },
+      data: { role: 'ADMIN' },
+    });
+
+    return { message: 'Admin role transferred successfully' };
+  }
+
+  async addMembers(workspaceId: string, userIds: string[]) {
+    const members = userIds.map((userId) => ({
+      workspaceId,
+      userId,
+      role: 'MEMBER',
+    }));
+
+    await this.databaseService.member.createMany({ data: members });
+
+    return { message: 'Members added successfully' };
   }
 
   generateWorkspaceCode() {

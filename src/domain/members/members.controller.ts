@@ -8,6 +8,7 @@ import {
   Delete,
   Put,
   Query,
+  Request,
 } from '@nestjs/common';
 import { MembersService } from './members.service';
 import { CreateMemberDto } from './dto/create-member.dto';
@@ -18,33 +19,34 @@ import { RoleEnum } from 'src/common/enums/role.enum';
 export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
-  @Get()
-  async getMembers(
-    @Query('workspaceId') workspaceId: string,
-    @Query('userId') userId: string,
-  ) {
-    return this.membersService.getMembers(workspaceId, userId);
+  @Get(':memberId')
+  async getMemberById(@Param('memberId') memberId: string, @Request() request) {
+    return this.membersService.getMemberById(memberId, request.user.id);
   }
 
-  @Get(':id')
-  async getMemberById(
-    @Param('id') id: string,
-    @Query('userId') userId: string,
+  @Get('/workspace/:workspaceId')
+  async getMembersByWorkspace(
+    @Param('workspaceId') workspaceId: string,
+    @Request() request,
   ) {
-    return this.membersService.getMemberById(id, userId);
+    return this.membersService.getMembers(workspaceId, request.user.id);
   }
 
-  @Put(':id')
+  @Patch(':memberId')
   async updateMemberRole(
-    @Param('id') id: string,
+    @Param('memberId') memberId: string,
     @Body('role') role: RoleEnum,
-    @Query('userId') userId: string,
+    @Request() request,
   ) {
-    return this.membersService.updateMemberRole(id, role, userId);
+    return this.membersService.updateMemberRole(
+      memberId,
+      role,
+      request.user.id,
+    );
   }
 
-  @Delete(':id')
-  async removeMember(@Param('id') id: string, @Query('userId') userId: string) {
-    return this.membersService.removeMember(id, userId);
+  @Delete(':memberId')
+  async removeMember(@Param('memberId') memberId: string, @Request() request) {
+    return this.membersService.removeMember(memberId, request.user.id);
   }
 }

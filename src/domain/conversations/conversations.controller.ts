@@ -7,33 +7,44 @@ import {
   Param,
   Delete,
   Query,
+  Request,
 } from '@nestjs/common';
 import { ConversationsService } from './conversations.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { UpdateConversationDto } from './dto/update-conversation.dto';
+import { AddParticipantDto } from './dto/add-participant.dto';
 
 @Controller('conversations')
 export class ConversationsController {
   constructor(private readonly conversationsService: ConversationsService) {}
 
-  @Get(':id')
-  async getConversation(
-    @Param('id') id: string,
-    @Query('userId') userId: string,
-  ) {
-    return this.conversationsService.getConversationById(id, userId);
+  @Post()
+  create(@Body() createConversationDto: CreateConversationDto) {
+    return this.conversationsService.create(createConversationDto);
   }
 
-  @Post('createOrGet')
-  async createOrGetConversation(
-    @Body('workspaceId') workspaceId: string,
-    @Body('memberId') memberId: string,
-    @Query('userId') userId: string,
-  ) {
-    return this.conversationsService.createOrGetConversation(
-      workspaceId,
-      memberId,
-      userId,
-    );
+  @Get()
+  findAll(@Query('workspaceId') workspaceId: string) {
+    return this.conversationsService.findAll(workspaceId);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.conversationsService.findOne(id);
+  }
+
+  @Post('/add-participant')
+  addParticipant(@Body() addParticipantDto: AddParticipantDto) {
+    return this.conversationsService.addParticipant(addParticipantDto);
+  }
+
+  @Patch('/kick-participant')
+  kickParticipant(@Body() addParticipantDto: AddParticipantDto) {
+    return this.conversationsService.addParticipant(addParticipantDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.conversationsService.remove(id);
   }
 }

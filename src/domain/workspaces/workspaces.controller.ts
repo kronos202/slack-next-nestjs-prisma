@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
+  Query,
 } from '@nestjs/common';
 import { WorkspacesService } from './workspaces.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
@@ -20,60 +22,59 @@ export class WorkspacesController {
   constructor(private readonly workspacesService: WorkspacesService) {}
 
   @Post('join')
-  async joinWorkspace(
-    @Body() body: { userId: string; workspaceId: string; joinCode: string },
-  ) {
-    return this.workspacesService.joinWorkspace(
-      body.userId,
-      body.workspaceId,
-      body.joinCode,
-    );
+  async joinWorkspace(@Body() body: { joinCode: string }, @Request() request) {
+    return this.workspacesService.joinWorkspace(request.user.id, body.joinCode);
   }
 
-  @Post('new-join-code')
-  async newJoinCode(@Body() body: { userId: string; workspaceId: string }) {
-    return this.workspacesService.newJoinCode(body.userId, body.workspaceId);
+  @Post('/:workspaceId/new-join-code')
+  async newJoinCode(
+    @Param('workspaceId') workspaceId: string,
+    @Request() request,
+  ) {
+    return this.workspacesService.newJoinCode(request.user.id, workspaceId);
   }
 
   @Post('create')
-  async createWorkspace(@Body() body: { userId: string; name: string }) {
-    return this.workspacesService.createWorkspace(body.userId, body.name);
+  async createWorkspace(@Body() body: { name: string }, @Request() request) {
+    return this.workspacesService.createWorkspace(request.user.id, body.name);
   }
 
   @Get('get')
-  async getWorkspaces(@Body() body: { userId: string }) {
-    return this.workspacesService.getWorkspaces(body.userId);
+  async getWorkspaces(@Request() request) {
+    return this.workspacesService.getWorkspaces(request.user.id);
   }
 
-  @Get('info/:id')
+  @Get('info')
   async getWorkspaceInfoById(
-    @Param('id') workspaceId: string,
-    @Body() body: { userId: string },
+    @Query('workspaceId') workspaceId: string,
+    @Request() request,
   ) {
     return this.workspacesService.getWorkspaceInfoById(
-      body.userId,
+      request.user.id,
       workspaceId,
     );
   }
 
-  @Post('update')
+  @Patch('update/:workspaceId')
   async updateWorkspace(
-    @Body() body: { userId: string; workspaceId: string; name: string },
+    @Body() body: { name: string },
+    @Param('workspaceId') workspaceId: string,
+    @Request() request,
   ) {
     return this.workspacesService.updateWorkspace(
-      body.userId,
-      body.workspaceId,
+      request.user.id,
+      workspaceId,
       body.name,
     );
   }
 
-  @Post('remove')
-  @Roles(RoleEnum.OWNER) // Chỉ owner có thể chuyển quyền sở hữu
+  @Delete('remove/:workspaceId')
+  @Roles(RoleEnum.ADMIN) // Chỉ owner có thể chuyển quyền sở hữu
   @UseGuards(RoleGuard)
-  async removeWorkspace(@Body() body: { userId: string; workspaceId: string }) {
-    return this.workspacesService.removeWorkspace(
-      body.userId,
-      body.workspaceId,
-    );
+  async removeWorkspace(
+    @Param('workspaceId') workspaceId: string,
+    @Request() request,
+  ) {
+    return this.workspacesService.removeWorkspace(request.user.id, workspaceId);
   }
 }
